@@ -1,0 +1,44 @@
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
+
+CLIENT_ID = 'your_client_id'
+CLIENT_SECRET = 'your_client_secret'
+
+playlist_link = input("Enter the Spotify Playlist URL or URI: ")
+
+credentials = SpotifyClientCredentials(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+sp = spotipy.Spotify(client_credentials_manager=credentials)
+
+def get_playlist_tracks(playlist_id):
+    results = sp.playlist_tracks(playlist_id)
+    tracks = results['items']
+    while results['next']:
+        results = sp.next(results)
+        tracks.extend(results['items'])
+    return tracks
+
+def extract_song_details(tracks):
+    song_list = []
+    for item in tracks:
+        track = item['track']
+        song_name = track['name']
+        artist_name = track['artists'][0]['name']
+        song_list.append(f"{song_name} by {artist_name}")
+    return song_list
+
+def save_to_file(song_list, filename='playlist_songs.txt'):
+    with open(filename, 'w') as file:
+        for song in song_list:
+            file.write(f"{song}\n")
+    print(f"Playlist songs saved to {filename}")
+
+if __name__ == "__main__":
+    # Extract playlist ID from URL or URI
+    if "playlist" in playlist_link:
+        playlist_id = playlist_link.split("/")[-1].split("?")[0]
+    else:
+        playlist_id = playlist_link
+
+    tracks = get_playlist_tracks(playlist_id)
+    song_list = extract_song_details(tracks)
+    save_to_file(song_list)
